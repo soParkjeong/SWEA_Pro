@@ -30,19 +30,6 @@ class UserSolution
 	static int curRank;//현재 페이지
 	static int curId;//현재 단어
 	
-	static class Solution{
-		static class PAGE{
-			int num;//페이지 번호
-			String word;//그 페이지애 있는 문자열 
-			
-			PAGE(){}
-			PAGE(int num,String word){
-				this.num=num;
-				this.word=word;
-			}
-		}
-	}
-	
 	//bestId 갱신용
 	static int better(int a,int b) {
 		if(a==0) return b;
@@ -158,7 +145,10 @@ class UserSolution
 	}
 	
 	static Solution.PAGE page(int num,String w){
-		return new Solution.PAGE(num,w);
+        Solution.PAGE p = new Solution.PAGE();
+        p.no = num;
+        p.word = w;
+        return p;
 	}
 	
 	static Solution.PAGE failPage(){
