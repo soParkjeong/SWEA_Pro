@@ -155,6 +155,7 @@ class UserSolution
 		return page(-1,"");
 	}
 	
+	//이 id를 가진 단어 페이지 번호 반환 함수 
 	static Solution.PAGE makePageById(int id){
 		curId=id;
 		curRank=rank(wordStr[id])+1;
