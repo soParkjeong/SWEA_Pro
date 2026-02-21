@@ -211,7 +211,7 @@ class UserSolution
 					continue;
 				}
 				
-				int a=getAssigned(cand);
+				int a=getAssigned(cand);//걔가 배정된 대학 
 				
 				if(a!=0 && a<empty) {//이미 더 좋은 대학이어도 패스
 					cand=pool[empty].higher(cand);//다음 대기후보로
