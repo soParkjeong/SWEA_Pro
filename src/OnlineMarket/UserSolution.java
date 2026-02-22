@@ -92,7 +92,7 @@ class UserSolution
     		sellClosed.add(first.id);//판매 종료 처리 
     	}
     	
-    	//아래 내 방식은 가격 순으로 정렬된 TreeSet의 장점을 살리지 못함
+    	//원래 했던 방식은 가격 순으로 정렬된 TreeSet의 장점을 살리지 못함
     	//(앞에서부터 보면서 0보다 작은지를 점검하면 정렬되어있으니까 0보다 커지는 품목부터 뒤로는 안봐도 됨)
 //    	for(Product p : selling[mCategory][mCompany]) {
 //    		if(p.basePrice-offSet[mCategory][mCompany]<=0) {
@@ -141,6 +141,7 @@ class UserSolution
     	}
     	
     	int cnt=0;
+    	//5개 뽑을 때까지 무한반복 ㄱ 
     	while(cnt<5 && !pq.isEmpty()) {
     		Cand cand=pq.poll();
     		res.IDs[cnt++]=cand.p.id;
@@ -160,6 +161,7 @@ class UserSolution
         Solution.RESULT res = new Solution.RESULT();
         res.cnt=0;
         
+        //전체 다 
         if(mHow==0) {
         	int[][]comb=new int[25][2];
         	int idx=0;
@@ -172,6 +174,7 @@ class UserSolution
 			return res;
         }
         
+        //같은 품목별로 
         if(mHow==1) {
         	int cat=mCode;
         	int[][]comb=new int[5][2];
@@ -182,6 +185,7 @@ class UserSolution
         	return res;
         }
         
+        //같은 제조사별로 
         int com=mCode;
         int[][]comb=new int[5][2];
         for(int cat=1;cat<=5;cat++) {
