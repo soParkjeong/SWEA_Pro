@@ -2,6 +2,7 @@ package callTaxi;
 
 class UserSolution
 {
+
 	public void init(int N, int M, int L, int[] mXs, int[] mYs)
 	{
 		return;
