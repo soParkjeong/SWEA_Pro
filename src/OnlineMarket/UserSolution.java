@@ -118,7 +118,7 @@ class UserSolution
     	}	
     }
     
-    //품목별로, 제조사별로 merge해서 상위 5개 뽑기용
+    //품목*제조사별로 짱들 쭈르륵 넣는거 5명 채울 때까지 반복 
     public void pick5(int[][] comb, Solution.RESULT res) {
     	PriorityQueue<Cand>pq=new PriorityQueue<>((a,b)->{
     		if(a.finalPrice!=b.finalPrice) return Integer.compare(a.finalPrice,b.finalPrice);

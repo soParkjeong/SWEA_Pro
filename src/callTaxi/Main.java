@@ -113,7 +113,7 @@ class Solution
 	
 	public static void main(String[] args) throws Exception
 	{
-		//System.setIn(new java.io.FileInputStream("res/sample_input.txt"));
+		System.setIn(new java.io.FileInputStream("res/sample_input_callTaxi.txt"));
 
 		Scanner sc = new Scanner(System.in);
 		
