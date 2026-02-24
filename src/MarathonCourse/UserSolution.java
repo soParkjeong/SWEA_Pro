@@ -106,7 +106,7 @@ class UserSolution {
 			for(int i=0;i<list.size();i++) {
 				int maxLen1=list.get(i).sum;
 				
-				if(maxLen1 + maxLen <= maxSum) break;//젤 큰거 두번 더해도 갱신 안되면 걍 컷 
+//				if(maxLen1 + maxLen <= maxSum) break;//젤 큰거 두번 더해도 갱신 안되면 걍 컷 
 				
 				for(int j=i+1;j<list.size();j++) {
 					int maxLen2=list.get(j).sum;
