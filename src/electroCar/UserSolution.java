@@ -1,6 +1,7 @@
 package electroCar;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.PriorityQueue;
 
@@ -77,9 +78,7 @@ class UserSolution {
 		
 		int[] infect=new int[N];//도시별 최소 누적 소요시간 저장용(통상적 dist배열 역할)
 		
-		for(int i=0;i<N;i++) {
-			infect[i]=1000000000;
-		}
+		for(int i=0;i<N;i++) infect[i]=1000000000;
 		
 		//동시 다발적으로 M개의 도시에서 전염 시작 
 		for(int i=0;i<M;i++) {
@@ -93,24 +92,36 @@ class UserSolution {
 		
 		while(!pq.isEmpty()) {
 			infectInfo cur=pq.poll();
-			int to=cur.city;
-			int t=cur.stime;
+			int from=cur.city;
+			int time=cur.stime;
 			
-			if(t>infect[to]) continue;
+			if(time>infect[from]) continue;//시간이 더 걸리는 선택이면 패스 
 			
-			for(Edge e:graph[to]) {
+			for(Edge e:graph[from]) {
 				if(removed.contains(e.id)) continue;
 				
-				int endCity=e.to;
-				int newTime=t+e.time;
+				int to=e.to;
+				int newTime=time+e.time;
 				
-				if(newTime<infect[endCity]) {
-					infect[endCity]=newTime;
-					pq.add(new infectInfo(endCity,newTime));
+				if(newTime<infect[to]) {
+					infect[to]=newTime;
+					pq.add(new infectInfo(to,newTime));
 				}
 			}
 		}
 		return infect;
+	}
+	
+	static class State{
+		int city;
+		int curTime;
+		int battery;
+		
+		State(int city,int curTime,int battery){
+			this.city=city;
+			this.curTime=curTime;
+			this.battery=battery;
+		}
 	}
 	
 	public int cost(int B, int sCity, int eCity, int M, int mCity[], int mTime[]) {
@@ -121,8 +132,59 @@ class UserSolution {
 		//근데 그냥 최소 소요시간만 고려할건 아니잖아...베터리 잔량 대비 간선의 전력소모도 고려해야하잖아.
 		//지금 도시에서 갈 간선을 선택할 때 일단 최소 소요시간인 곳을 골라
 		//->그러고 그 간선의 mPower[i]가 현재 베터리 잔량보다 작으면 pass(다음 최소 소요시간 간선 보러감)/ 그러고 그 간선에 연결된 eCity의 전염 다익 시간보다 현재 시간이 뒤면 전염되었으니 pass, 앞이면 아직 전염안되었으니 거기로 ㄱ   
+		int[] infect = infectTime(M, mCity, mTime);
 		
-		int remain=B;//잔량 
-		return 0;
+		int[][]dist=new int[N][B+1];
+		for(int i=0;i<N;i++) Arrays.fill(dist[i], 1000000000);
+		
+		PriorityQueue<State>pq=new PriorityQueue<>((a,b)->a.curTime-b.curTime);
+		
+	    if (0 >= infect[sCity]) return -1;	  //출발 도시가 이미 전염 상태면 못가 
+	    
+		//일단 출발지 넣고 시작 
+		dist[sCity][B]=0;
+		pq.add(new State(sCity,0,B));
+		
+		while(!pq.isEmpty()) {
+			State cur=pq.poll();
+			int from=cur.city;
+			int time=cur.curTime;
+			int b=cur.battery;
+			
+			if(time>dist[from][b]) continue;
+			
+			if(time>=infect[from]) continue;//지금 출발도시가 전염되었으면 이동 못함 
+			
+			if (from == eCity) return time;
+			
+			for(Edge e:graph[from]) {
+				if(removed.contains(e.id)) continue;
+				if(b<e.power) continue;//잔량보다 전력소모량 크면 패스 
+				
+				int to=e.to;
+				int newTime=time+e.time;
+				if(newTime>=infect[to]) continue;//전염시기보다 시간이 더 지났으면 패스 
+				
+				int newb=b-e.power;
+				if(newTime<dist[to][newb]) {
+					dist[to][newb]=newTime;
+					pq.add(new State(to,newTime,newb));
+				}
+			}
+			
+			int newTime=time+1;
+			if(newTime<infect[from]) {
+				int newb=b+charge[from];
+				if(b+charge[from]>=B) {//충전해도 B를 넘으면 안됨
+					newb=B;
+				}
+				if(newTime<dist[from][newb]) {
+					dist[from][newb]=newTime;
+					pq.add(new State(from,newTime,newb));
+				}
+			}
+		}
+		
+		return -1;
 	}
 }

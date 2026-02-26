@@ -84,7 +84,7 @@ class Solution {
 	public static void main(String[] args) throws Exception {
 		int TC, MARK;
 
-		//System.setIn(new java.io.FileInputStream("res/sample_input.txt"));
+		System.setIn(new java.io.FileInputStream("res/sample_input_electroCar.txt"));
 
 		Scanner sc = new Scanner(System.in);
 
