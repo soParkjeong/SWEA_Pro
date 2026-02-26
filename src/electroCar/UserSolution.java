@@ -124,6 +124,13 @@ class UserSolution {
 		}
 	}
 	
+	boolean dominated(int city, int time, int b, int B, int[][] dist) {
+	    for (int bb = b + 1; bb <= B; bb++) {
+	        if (dist[city][bb] <= time) return true;
+	    }
+	    return false;
+	}
+	
 	public int cost(int B, int sCity, int eCity, int M, int mCity[], int mTime[]) {
 		//일단 다익스트라에서 갱신할 때마다 갈 곳의 전염여부 체크해야하잖아.
 		//일단 시간이 계속 지나면 다 전염은 될거자나,,,그럼 가장 빠르게 전염될 시간 갖고 있다가 그거 기준으로 전염 여부 파악하자-> 전염 다익 ㄱ
@@ -154,6 +161,8 @@ class UserSolution {
 			if(time>dist[from][b]) continue;
 			
 			if(time>=infect[from]) continue;//지금 출발도시가 전염되었으면 이동 못함 
+			
+			if (dominated(from, time, b, B, dist)) continue;
 			
 			if (from == eCity) return time;
 			
