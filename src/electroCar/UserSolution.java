@@ -80,7 +80,9 @@ class UserSolution {
 		
 		for(int i=0;i<N;i++) infect[i]=1000000000;
 		
+		//멀티 소스 다익스트라 
 		//동시 다발적으로 M개의 도시에서 전염 시작 
+		//전염 시작점이 여러 개니까, 다 PQ에 넣고 infect(dist 역할)도 초기 세팅 
 		for(int i=0;i<M;i++) {
 			int c=mCity[i];
 			int t=mTime[i];//전염 시작 시간
@@ -124,9 +126,9 @@ class UserSolution {
 		}
 	}
 	
-	boolean dominated(int city, int time, int b, int B, int[][] dist) {
+	boolean cut(int city, int time, int b, int B, int[][] dist) {
 	    for (int bb = b + 1; bb <= B; bb++) {
-	        if (dist[city][bb] <= time) return true;
+	        if (time>=dist[city][bb]) return true;//잔량이 더 많이 남았는데 더 빠른 방법이 있어? 그럼 패스 
 	    }
 	    return false;
 	}
@@ -141,7 +143,7 @@ class UserSolution {
 		//->그러고 그 간선의 mPower[i]가 현재 베터리 잔량보다 작으면 pass(다음 최소 소요시간 간선 보러감)/ 그러고 그 간선에 연결된 eCity의 전염 다익 시간보다 현재 시간이 뒤면 전염되었으니 pass, 앞이면 아직 전염안되었으니 거기로 ㄱ   
 		int[] infect = infectTime(M, mCity, mTime);
 		
-		int[][]dist=new int[N][B+1];
+		int[][]dist=new int[N][B+1];//상태: 도시,배터리 잔량 
 		for(int i=0;i<N;i++) Arrays.fill(dist[i], 1000000000);
 		
 		PriorityQueue<State>pq=new PriorityQueue<>((a,b)->a.curTime-b.curTime);
@@ -162,18 +164,22 @@ class UserSolution {
 			
 			if(time>=infect[from]) continue;//지금 출발도시가 전염되었으면 이동 못함 
 			
-			if (dominated(from, time, b, B, dist)) continue;
+			if (cut(from, time, b, B, dist)) continue;
 			
+			//도착하면 누적 소요 시간 반환 
 			if (from == eCity) return time;
 			
+			//이동이니까 간선 전체 다 점검 
 			for(Edge e:graph[from]) {
 				if(removed.contains(e.id)) continue;
+				
 				if(b<e.power) continue;//잔량보다 전력소모량 크면 패스 
 				
 				int to=e.to;
 				int newTime=time+e.time;
-				if(newTime>=infect[to]) continue;//전염시기보다 시간이 더 지났으면 패스 
+				if(newTime>=infect[to]) continue;//전염시기보다 시간이 더 지났거나 동일하면 패스 
 				
+				//전력 소모
 				int newb=b-e.power;
 				if(newTime<dist[to][newb]) {
 					dist[to][newb]=newTime;
@@ -181,8 +187,10 @@ class UserSolution {
 				}
 			}
 			
+			//제자리에서 충전-> 간선 iterator로 점검 불필요 
 			int newTime=time+1;
 			if(newTime<infect[from]) {
+				//전력 충전 
 				int newb=b+charge[from];
 				if(b+charge[from]>=B) {//충전해도 B를 넘으면 안됨
 					newb=B;
