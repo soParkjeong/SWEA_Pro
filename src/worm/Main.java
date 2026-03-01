@@ -1,4 +1,4 @@
-package warm;
+package worm;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -78,7 +78,7 @@ class Solution
 
     public static void main(String[] args) throws Exception
     {
-        //System.setIn(new java.io.FileInputStream("res/sample_input.txt"));
+        System.setIn(new java.io.FileInputStream("res/sample_input_worm.txt"));
 
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine(), " ");
@@ -86,7 +86,7 @@ class Solution
         int TC = Integer.parseInt(st.nextToken());
         int MARK = Integer.parseInt(st.nextToken());
 
-        for (int testcase = 1; testcase <= TC; ++testcase)
+        for (int testcase = 1; testcase <= 1; ++testcase)
         {
             int score = run(br) ? MARK : 0;
             System.out.println("#" + testcase + " " + score);
