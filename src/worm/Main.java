@@ -86,7 +86,7 @@ class Solution
         int TC = Integer.parseInt(st.nextToken());
         int MARK = Integer.parseInt(st.nextToken());
 
-        for (int testcase = 1; testcase <= 1; ++testcase)
+        for (int testcase = 1; testcase <= TC; ++testcase)
         {
             int score = run(br) ? MARK : 0;
             System.out.println("#" + testcase + " " + score);
