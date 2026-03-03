@@ -57,10 +57,8 @@ class UserSolution {
 		this.limit=mLimit;
 		
 		this.S=limit/10;
-		if(this.S<=0) this.S=1;
 		
 		this.W=(N+S-1)/S;
-		if(this.W<=0) this.W=1;
 		
 		bucket=new ArrayList[W][W];
 		for(int i=0;i<W;i++) {
