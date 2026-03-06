@@ -54,11 +54,11 @@ class UserSolution {
             }
         }
 
-        // ✅ 블록 크기 S 결정 : √N 근처로 잡는 정석
+        // 블록 크기 S 결정 : √N 근처로 잡는 정석
         // - S를 너무 작게 잡으면 블록 수가 너무 많아져 full block 처리 이점이 줄어듦
         // - S를 너무 크게 잡으면 부분 블록 처리(직접 순회)가 느려짐
         S = (int) Math.sqrt(N);
-        if (S * S < N) S++;          // ceil(sqrt(N)) 느낌으로 (예: √10=3.xx -> 4)
+        if (S * S < N) S++;          // ceil(sqrt(N)) 느낌으로
         if (S < 1) S = 1;
 
         // 블록 개수 계산
