@@ -3,9 +3,10 @@ package lockdownCity;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+//import java.util.HashMap;
 import java.util.Queue;
-import java.util.TreeSet;
+import java.util.TreeMap;
+//import java.util.TreeSet;
 
 class UserSolution {
 	int N;
@@ -27,8 +28,8 @@ class UserSolution {
 		}
 	}
 	
-	TreeSet<String> gradeSet=new TreeSet<>((a,b)->a.compareTo(b));//보안 등급 사전순으로 정렬 
-	HashMap<String,Integer> gradeCount=new HashMap<>();//보안등급 별 개수 저장용 
+	TreeMap<String,Integer> gradeMap=new TreeMap<>((a,b)->a.compareTo(b));//보안 등급 사전순으로 정렬 
+//	HashMap<String,Integer> gradeCnt=new HashMap<>();//보안등급 별 개수 저장용 
 
 	static class Node{
 		int r;
@@ -44,8 +45,8 @@ class UserSolution {
 		this.M=M;
 		
 		city=new String[N][N];
-		gradeSet.clear();
-		gradeCount.clear();
+		gradeMap.clear();
+//		gradeCnt.clear();
 		
 		for(int r=0;r<N;r++) {
 			for(int c=0;c<N;c++) {
@@ -81,19 +82,19 @@ class UserSolution {
 	}
 	
 	void addGrade(String grade) {
-		int cnt=gradeCount.getOrDefault(grade,0);//그 등급이 비어있으면 일단 0으로 초기화 
-		gradeCount.put(grade, cnt+1);//해당 보안 등급 개수+1
-		gradeSet.add(grade);//TreeSet에 그 등급 추가
+//		int cnt=gradeCnt.getOrDefault(grade,0);//그 등급이 비어있으면 일단 0으로 초기화 
+//		gradeCnt.put(grade, cnt+1);//해당 보안 등급 개수+1
+		gradeMap.put(grade,gradeMap.getOrDefault(grade, 0) + 1);//TreeMap에 추가
 	}
 	
 	void removeGrade(String grade) {
-		int cnt=gradeCount.get(grade);
+		int cnt=gradeMap.get(grade);
 		
 		if(cnt<=1) {//그 보안등급 개수가 1개 이하로 있으면 
-			gradeCount.remove(grade);
-			gradeSet.remove(grade);//개수 셋이랑 등급 셋에서 아예 제거
+//			gradeCnt.remove(grade);
+			gradeMap.remove(grade);//개수 셋이랑 등급 셋에서 아예 제거
 		}else {
-			gradeCount.put(grade,cnt-1);//개수 셋에서 -1 해주기 
+			gradeMap.put(grade,cnt-1);//개수 셋에서 -1 해주기 
 		}
 	}
 	
@@ -104,6 +105,7 @@ class UserSolution {
 		}return false;//불가능
 	}
 	
+	//L이내로 도착 가능? 
 	boolean canReach(Ticket ticket,int sRow,int sCol,int eRow,int eCol) {
 		Queue<Node> q=new ArrayDeque<>();
 		int[][]dist=new int[N][N];//(r,c)까지 오는데 누적 이동 거리 저장소 
@@ -141,9 +143,9 @@ class UserSolution {
 		return false;
 	}
 	
-	//200
+	//200번 호출 
 	String calculate(int L,int sRow,int sCol,int eRow,int eCol) {
-		ArrayList<String> cand=new ArrayList<>(gradeSet);//TreeSet에는 인덱스로 접근 못하니까 
+		ArrayList<String> cand=new ArrayList<>(gradeMap.keySet());//TreeSet에는 인덱스로 접근 못하니까 
 		
 		//bfs로 L이내로 도착할 수 있는 경로 중 티켓 보안등급이 젤 낮은 티켓으로도 갈 수 있는 경로 
 		//이미 보안등급은 사전순으로 정렬되어있으니까 이분탐색 ㄱ 
