@@ -82,7 +82,7 @@ class UserSolution {
         bucketC[id] = bc;
  
         list.add(id);
- 
+        
         return 1;
     }
     
