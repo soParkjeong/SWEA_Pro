@@ -1,213 +1,169 @@
 package smartFarm;
 
 import java.util.*;
- 
+
 class UserSolution {
- 
+
+    static final int BUCKET_SIZE = 100;
+
     int N;
-    int[] growthTime = new int[3];
- 
-    int[] sowTime;
-    int[] cat;
-    int[] extraWater;
- 
-    // 버킷
-    int S;
-    int B;
-    List<Integer>[][] bucket;
-    int[][] bucketWater;
- 
-    // 버킷 인덱스 
-    int[] posInBucket;
-    int[] bucketR;
-    int[] bucketC;
- 
-    int id(int r, int c) {
-        return r * N + c;
-    }
- 
+    int[] growthTime;
+
+    Crop[][] map;                  // 각 좌표에 심어진 작물
+    List<Crop>[][] buckets;        // 버킷별 작물 목록
+    int[][] bucketWater;           // 버킷 전체에 누적된 물
+
     void init(int N, int mGrowthTime[]) {
         this.N = N;
- 
-        for (int i = 0; i < 3; i++)
+
+        growthTime = new int[mGrowthTime.length];
+        for (int i = 0; i < mGrowthTime.length; i++) {
             growthTime[i] = mGrowthTime[i];
- 
-        int NN = N * N;
- 
-        sowTime = new int[NN];
-        cat = new int[NN];
-        extraWater = new int[NN];
- 
-        posInBucket = new int[NN];
-        bucketR = new int[NN];
-        bucketC = new int[NN];
- 
-        Arrays.fill(sowTime, -1);
- 
-        // √분할
-        S = 100;
-        if (S * S < N) S++;
- 
-        B = (N + S - 1) / S;
- 
-        bucket = new ArrayList[B][B];
-        bucketWater = new int[B][B];
- 
-        for (int i = 0; i < B; i++) {
-            for (int j = 0; j < B; j++) {
-                bucket[i][j] = new ArrayList<>();
+        }
+
+        map = new Crop[N][N];
+
+        // 버킷 개수
+        int bucketCount = (N + BUCKET_SIZE - 1) / BUCKET_SIZE;
+
+        buckets = new ArrayList[bucketCount][bucketCount];
+        bucketWater = new int[bucketCount][bucketCount];
+
+        for (int i = 0; i < bucketCount; i++) {
+            for (int j = 0; j < bucketCount; j++) {
+                buckets[i][j] = new ArrayList<>();
             }
         }
     }
- 
+
     int sow(int mTime, int mRow, int mCol, int mCategory) {
- 
-        int id = id(mRow, mCol);
- 
-        if (sowTime[id] != -1)
-            return 0;
- 
-        int br = mRow / S;
-        int bc = mCol / S;
- 
-        sowTime[id] = mTime;
-        cat[id] = mCategory;
- 
-        extraWater[id] = -bucketWater[br][bc];
- 
-        List<Integer> list = bucket[br][bc];
- 
-        posInBucket[id] = list.size();
-        bucketR[id] = br;
-        bucketC[id] = bc;
- 
-        list.add(id);
- 
+        // 이미 심어진 칸이면 실패
+        if (map[mRow][mCol] != null) return 0;
+
+        int br = mRow / BUCKET_SIZE;
+        int bc = mCol / BUCKET_SIZE;
+
+        Crop crop = new Crop(mRow, mCol, mCategory, mTime);
+
+        // 이 버킷에 지금까지 누적된 물을 빼서
+        // "이 작물이 심어진 이후부터 받은 물"만 계산되도록 보정
+        crop.extraWater = -bucketWater[br][bc];
+
+        map[mRow][mCol] = crop;
+        buckets[br][bc].add(crop);
+
         return 1;
     }
-    
- 
+
     int water(int mTime, int G, int mRow, int mCol, int mHeight, int mWidth) {
- 
         int x1 = mRow;
         int x2 = mRow + mHeight - 1;
         int y1 = mCol;
         int y2 = mCol + mWidth - 1;
- 
-        int bx1 = x1 / S;
-        int bx2 = x2 / S;
-        int by1 = y1 / S;
-        int by2 = y2 / S;
- 
-        int cnt = 0;
- 
+
+        int bx1 = x1 / BUCKET_SIZE;
+        int bx2 = x2 / BUCKET_SIZE;
+        int by1 = y1 / BUCKET_SIZE;
+        int by2 = y2 / BUCKET_SIZE;
+
+        int count = 0;
+
         for (int br = bx1; br <= bx2; br++) {
             for (int bc = by1; bc <= by2; bc++) {
- 
-                int rs = br * S;
-                int re = Math.min(N - 1, rs + S - 1);
- 
-                int cs = bc * S;
-                int ce = Math.min(N - 1, cs + S - 1);
- 
+
+                int rs = br * BUCKET_SIZE;
+                int re = Math.min(N - 1, rs + BUCKET_SIZE - 1);
+
+                int cs = bc * BUCKET_SIZE;
+                int ce = Math.min(N - 1, cs + BUCKET_SIZE - 1);
+
+                // 이 버킷이 급수 사각형 안에 완전히 포함되는지 확인
                 boolean full =
                         rs >= x1 && re <= x2 &&
                         cs >= y1 && ce <= y2;
- 
+
                 if (full) {
- 
+                    // 버킷 전체에 한 번에 물 주기
                     bucketWater[br][bc] += G;
-                    cnt += bucket[br][bc].size();
- 
+                    count += buckets[br][bc].size();
                 } else {
- 
-                    for (int id : bucket[br][bc]) {
- 
-                        int r = id / N;
-                        int c = id % N;
- 
-                        if (r >= x1 && r <= x2 &&
-                            c >= y1 && c <= y2) {
- 
-                            extraWater[id] += G;
-                            cnt++;
+                    // 일부만 겹치면 버킷 안 작물들을 직접 확인
+                    for (Crop crop : buckets[br][bc]) {
+                        if (crop.r >= x1 && crop.r <= x2 &&
+                            crop.c >= y1 && crop.c <= y2) {
+                            crop.extraWater += G;
+                            count++;
                         }
                     }
                 }
             }
         }
- 
-        return cnt;
+
+        return count;
     }
- 
-    int height(int id, int mTime) {
- 
-        int br = bucketR[id];
-        int bc = bucketC[id];
- 
-        return (mTime - sowTime[id]) / growthTime[cat[id]]
-                + bucketWater[br][bc]
-                + extraWater[id];
-    }
- 
-    void removeFromBucket(int id) {
- 
-        int br = bucketR[id];
-        int bc = bucketC[id];
- 
-        List<Integer> list = bucket[br][bc];
- 
-        int pos = posInBucket[id];
-        int last = list.get(list.size() - 1);
- 
-        list.set(pos, last);
- 
-        posInBucket[last] = pos;
- 
-        list.remove(list.size() - 1);
-    }
- 
+
     int harvest(int mTime, int L, int mRow, int mCol, int mHeight, int mWidth) {
- 
         int x1 = mRow;
         int x2 = mRow + mHeight - 1;
         int y1 = mCol;
         int y2 = mCol + mWidth - 1;
- 
-        int bx1 = x1 / S;
-        int bx2 = x2 / S;
-        int by1 = y1 / S;
-        int by2 = y2 / S;
- 
-        List<Integer> target = new ArrayList<>();
- 
+
+        int bx1 = x1 / BUCKET_SIZE;
+        int bx2 = x2 / BUCKET_SIZE;
+        int by1 = y1 / BUCKET_SIZE;
+        int by2 = y2 / BUCKET_SIZE;
+
+        List<Crop> targets = new ArrayList<>();
+
+        // 1단계: 수확 가능 여부 먼저 전부 검사
         for (int br = bx1; br <= bx2; br++) {
             for (int bc = by1; bc <= by2; bc++) {
- 
-                for (int id : bucket[br][bc]) {
- 
-                    int r = id / N;
-                    int c = id % N;
- 
-                    if (r >= x1 && r <= x2 &&
-                        c >= y1 && c <= y2) {
- 
-                        if (height(id, mTime) < L)
+                for (Crop crop : buckets[br][bc]) {
+                    if (crop.r >= x1 && crop.r <= x2 &&
+                        crop.c >= y1 && crop.c <= y2) {
+
+                        if (crop.getHeight(mTime, bucketWater[br][bc]) < L) {
                             return 0;
- 
-                        target.add(id);
+                        }
+
+                        targets.add(crop);
                     }
                 }
             }
         }
- 
-        for (int id : target) {
- 
-            sowTime[id] = -1;
- 
-            removeFromBucket(id);
+
+        // 2단계: 전부 가능하면 실제 삭제
+        for (Crop crop : targets) {
+            map[crop.r][crop.c] = null;
+
+            int br = crop.r / BUCKET_SIZE;
+            int bc = crop.c / BUCKET_SIZE;
+
+            // posInBucket 없이 일반 remove 사용
+            buckets[br][bc].remove(crop);
         }
- 
-        return target.size();
+
+        return targets.size();
+    }
+
+    class Crop {
+        int r, c;
+        int category;
+        int sowTime;
+        int extraWater;
+
+        Crop(int r, int c, int category, int sowTime) {
+            this.r = r;
+            this.c = c;
+            this.category = category;
+            this.sowTime = sowTime;
+            this.extraWater = 0;
+        }
+
+        int getHeight(int mTime, int bucketWaterValue) {
+            return (mTime - sowTime) / growthTime[category]
+                    + bucketWaterValue
+                    + extraWater;
+        }
     }
 }
