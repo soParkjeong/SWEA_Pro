@@ -76,13 +76,14 @@ class UserSolution {
 
         while (!pq.isEmpty()) {
             State cur = pq.poll();
+            int curCity=cur.city;
+            int curCapacity=cur.capacity;
 
-            // PQ에 남아 있는 오래된 상태 제거
-            if (cur.capacity != result[cur.city]) continue;
+            if (curCapacity != result[curCity]) continue;
 
             for (Edge edge : graph[cur.city]) {
                 int next = edge.to;
-                int nextCapacity = Math.min(cur.capacity, edge.limit);
+                int nextCapacity = Math.min(curCapacity, edge.limit);
 
                 if (result[next] < nextCapacity) {
                     result[next] = nextCapacity;
