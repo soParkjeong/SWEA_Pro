@@ -1,113 +1,94 @@
 package stopOver;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.PriorityQueue;
- 
+
+import java.util.*;
+
 class UserSolution {
- 
-    static List<Node>[] graph;  // 간선 연결 저장
-    static class Node{
-        int e;
-        int w;
- 
-        public Node(int e, int w){
-            this.e = e;
-            this.w = w;
+
+    static class Edge {
+        int to;
+        int limit;
+
+        Edge(int to, int limit) {
+            this.to = to;
+            this.limit = limit;//제한 중량
         }
     }
-    
-    Comparator<Node>EdgeComparator=(a,b)->{
-    	return Integer.compare(b.w,a.w);
-    };
- 
-    static PriorityQueue<Node> pq;
+
+    static class State {
+        int city;
+        int capacity;
+
+        State(int city, int capacity) {
+            this.city = city;
+            this.capacity = capacity;//운송 가능한 제한 중량 
+        }
+    }
+
+    static List<Edge>[] graph;
+    static PriorityQueue<State> pq;
     static int[] result;
     static int totalN;
- 
-    public void init(int N, int K, int sCity[], int eCity[], int mLimit[]) {
+
+    static Comparator<State> stateComp = (a, b) -> Integer.compare(b.capacity, a.capacity);//큰 것부터 나오도록(제한 중량이 큰 것)
+
+    public void init(int N, int K, int[] sCity, int[] eCity, int[] mLimit) {
         totalN = N;
- 
-        graph = new ArrayList[N];
+
+        graph = new List[N];
         for (int i = 0; i < N; i++) {
-        	graph[i] = new ArrayList<Node>();
+            graph[i] = new ArrayList<>();
         }
- 
-        for(int i=0;i<K;i++){
-            int s = sCity[i];
-            int e = eCity[i];
-            int w = mLimit[i];
-            graph[s].add(new Node(e, w));
-            graph[e].add(new Node(s, w));
+
+        for (int i = 0; i < K; i++) {
+            graph[sCity[i]].add(new Edge(eCity[i], mLimit[i]));
+            graph[eCity[i]].add(new Edge(sCity[i], mLimit[i]));
         }
- 
-        pq = new PriorityQueue<>(EdgeComparator);
+
+        pq = new PriorityQueue<>(stateComp);
         result = new int[N];
- 
-        return;
     }
- 
+
     public void add(int sCity, int eCity, int mLimit) {
-    	graph[sCity].add(new Node(eCity, mLimit));
-    	graph[eCity].add(new Node(sCity, mLimit));
-        return;
+        graph[sCity].add(new Edge(eCity, mLimit));
+        graph[eCity].add(new Edge(sCity, mLimit));
     }
-    
-    static int calcSCity;
-    static int calcECity;
-    static int calcM;
-    static int[] calcMStopover;
- 
-    public int calculate(int sCity, int eCity, int M, int mStopover[]) {
- 
-        calcSCity = sCity;
-        calcECity = eCity;
-        calcM = M;
-        calcMStopover = mStopover;
- 
-        logic(calcSCity);  // 출발지에서 다익스트라 돌리기 ( 딱 1번만 전체로 )
- 
-        int answer = result[calcECity];      // 도착지까지 얼마나 걸려?
-        if(answer == 0) return -1;           // 도착 못함
- 
-        for(int i=0;i<calcM;i++){
-            int now = calcMStopover[i];     // 경유지
-            int w = result[now];            // 경유지까지 얼마나 걸려?
-            if(w == 0) return -1;            // 못가
-            answer = Math.min(answer, w);
+
+    public int calculate(int sCity, int eCity, int M, int[] mStopover) {
+        logic(sCity);
+
+        int answer = result[eCity];
+        if (answer == 0) return -1;
+
+        for (int i = 0; i < M; i++) {
+            int stop = mStopover[i];
+            if (result[stop] == 0) return -1;
+            answer = Math.min(answer, result[stop]);
         }
- 
+
         return answer;
     }
- 
-    private static void logic(int start){
-        boolean visited2[] = new boolean[totalN];
+
+    private static void logic(int start) {
         Arrays.fill(result, 0);
- 
+
         pq.clear();
-        pq.offer(new Node(start, Integer.MAX_VALUE/10));
- 
-        while(!pq.isEmpty()){
-        	Node node = pq.poll();
- 
-            if(visited2[node.e]) continue;
-            visited2[node.e] = true;
-            result[node.e] = node.w;
- 
-            for(int i=0;i<graph[node.e].size();i++){
-            	Node edge = graph[node.e].get(i);      // 연결되어 있는거 하나 꺼내
-                int next = edge.e;                   // 다음 체크
- 
-                int cost = Math.min(node.w, edge.w);  // 가중치는 둘 중에 작은걸로 기억(왜냐하면 제한중량은 적은 거 기준으로 제한점이 걸리므로)
- 
-                if(!visited2[next] && result[next] < cost){ // 안가본데고 더 크면 넣기
-                    pq.offer(new Node(next, cost));
+        pq.offer(new State(start, Integer.MAX_VALUE / 10));
+
+        while (!pq.isEmpty()) {
+            State cur = pq.poll();
+
+            // PQ에 남아 있는 오래된 상태 제거
+            if (cur.capacity != result[cur.city]) continue;
+
+            for (Edge edge : graph[cur.city]) {
+                int next = edge.to;
+                int nextCapacity = Math.min(cur.capacity, edge.limit);
+
+                if (result[next] < nextCapacity) {
+                    result[next] = nextCapacity;
+                    pq.offer(new State(next, nextCapacity));
                 }
             }
- 
         }
- 
     }
- 
 }
