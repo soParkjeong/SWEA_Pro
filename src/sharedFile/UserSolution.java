@@ -30,24 +30,40 @@ class UserSolution {
 		int size;
 		int addTime;//파일 추가 시각 
 		
-		File(int id,int size,int addTime){
+		int ownerComp;//이 파일이 존재하는 컴퓨터
+		boolean shared;//공유 원본인지, 그냥 다운로드 완료본인지 
+		
+		File(int id,int size,int addTime,int ownerComp){
 			this.id=id;
 			this.size=size;
 			this.addTime=addTime;
+			this.ownerComp=ownerComp;
+			this.shared=true;
 		}
 	}
 	
-	ArrayList<Request>[] requestComputer;//컴퓨터별 파일 요청 리스트
+	ArrayList<Request>[] requestComputer;//컴퓨터별 파일 다운로드 요청 리스트
 	
 	static class Request{
 		int requestId;//요청 파일 id
 		int requestSize;//요청 파일 사이즈 
 		int requestTime;//파일 요청 시각 
 		
-		Request(int requestId,int requestSize,int requestTime){
+		int compId;//요청한 컴퓨터
+		long downloaded;//지금까지 다운받은 양
+		int lastUpdateTime;//마지막 (업데이트) 반영 시각
+		int sourceCnt;//현재 붙어있는 공유 원본 수
+		boolean finished;//완료 여부 
+		
+		Request(int requestId,int requestSize,int requestTime,int compId,int sourceCnt){
 			this.requestId=requestId;
 			this.requestSize=requestSize;
 			this.requestTime=requestTime;
+			this.compId=compId;
+			this.downloaded=0;//아직 다운로드 된 건 없음
+			this.lastUpdateTime=requestTime;//초기 시각은 다운로드 요청 시각 
+			this.sourceCnt=sourceCnt;
+			this.finished=false;//미완료 상태 
 		}
 	}
 	
@@ -71,35 +87,28 @@ class UserSolution {
 	};
 	
 	List<Integer> canDownload;//5000 이내의 컴퓨터 저장소  
-	
-	static class Download{
-		int time;//다운로드 요청 시각 
-		int fileId;//다운로드 요청한 파일 id
 		
-		Download(int time,int fileId){
-			this.time=time;
-			this.fileId=fileId;
-		}
-	}
-	
-	
 	//1. init
 	void init(int N, int mShareFileCnt[], int mFileID[][], int mFileSize[][])
 	{
 		this.N=N;
 		
+		graph=new ArrayList[N+1];
+		for(int i=1;i<=N;i++) graph[i]=new ArrayList<>();
+		
 		inComputer=new ArrayList[N+1];
 		fileMap=new HashMap<>();
-		
 		for(int i=1;i<=N;i++) {
 			inComputer[i]=new ArrayList<>();
-			for(int k=0;k<mShareFileCnt[i+1];k++) {
-				File file=new File(mFileID[i][k],mFileSize[i][k],0);
+			for(int k=0;k<mShareFileCnt[i-1];k++) {
+				File file=new File(mFileID[i-1][k],mFileSize[i-1][k],0,i);
 				inComputer[i].add(file);
-				fileMap.put(mFileID[i][k], file);//맵에도 저장 완
+				fileMap.put(mFileID[i-1][k], file);//맵에도 저장 완
 			}
 		}//컴퓨터별 파일 주입 완 
 		
+		requestComputer=new ArrayList[N+1];
+		for(int i=1; i<=N; i++) requestComputer[i]=new ArrayList<>();
 	}
 
 	
@@ -107,10 +116,6 @@ class UserSolution {
 	void makeNet(int K, int mComA[], int mComB[], int mDis[])
 	{
 		this.K=K;
-		
-		for(int k=0;k<K;k++) {
-			graph[k]=new ArrayList<>();
-		}
 		
 		for(int k=0;k<K;k++) {
 			graph[mComA[k]].add(new Edge(mComB[k],mDis[k],0));
@@ -151,60 +156,93 @@ class UserSolution {
 		}
 		return canDownload;
 	}
+	
+	//어떤 컴퓨터가 특정 파일을 공유 원본으로 갖고 있는지 
+	boolean hasSharedFile(int compId,int fileId) {
+		for(File file:inComputer[compId]) {
+			if(file.id==fileId && file.shared) return true;
+		}
+		return false;
+	}
+	
+	//어떤 컴퓨터가 특정 파일을 갖고 있는지 여부 쳌
+	File getFileInComputer(int compId,int fileId) {
+		for(File file: inComputer[compId]) {
+			if(file.id==fileId) return file;
+		}
+		return null;
+	}
 
+	//5000이하로 갈 수 있는 컴퓨터들 중 fileId의 shared=true 상태로 가진 컴퓨터 수 세기
+	int countSource(int startComp, int fileId) {
+		
+	}
 	
 	//3. addLink
 	void addLink(int mTime, int mComA, int mComB, int mDis)
 	{
+		//1. 현재 시각까지 다운로드 진행 반영(업데이트)
+		
+		//2. 링크 추가 
 		Edge edge1=new Edge(mComA,mDis,mTime);
 		Edge edge2=new Edge(mComB,mDis,mTime);
 		
 		graph[mComA].add(edge2);
 		graph[mComB].add(edge1);//양방향 연결 완 
 		
-		//아마 다운로드 요청 컴퓨터 목록 저장소 생성해서 
-		if(requestComputer!=null) {
-			for(int i=0;i<N;i++) {
-				downloadDijk(i);//5000이내에 있는 컴퓨터 목록 반환
-				//그 컴퓨터들에 있는 파일들 다운로드 시작(mTime에)
-				for(int d=0;d<canDownload.size();d++) {
-					int compId=canDownload.get(d);
-					//이 컴퓨터에 있는 파일을 요청 파일에 추가
-					for(int k=0;k<inComputer[compId].size();k++) {
-						int requestId=inComputer[compId].get(k).id;
-						int requestSize=inComputer[compId].get(k).size;
-						requestComputer[compId].add(new Request(requestId,requestSize,mTime));
-					}
-				}
-			}
-		}
+		//3. 기존 모든 요청의 sourceCnt 재계산 
+		//아마 다운로드 요청 컴퓨터 목록 저장소 생성해서(->틀림: 계속 새 요청 생성)
+//		if(requestComputer!=null) {
+//			for(int i=1;i<=N;i++) {
+//				downloadDijk(i);//5000이내에 있는 컴퓨터 목록 반환
+//				//그 컴퓨터들에 있는 파일들 다운로드 시작(mTime에)
+//				for(int d=0;d<canDownload.size();d++) {
+//					int compId=canDownload.get(d);
+//					//이 컴퓨터에 있는 파일을 요청 파일에 추가
+//					for(int k=0;k<inComputer[compId].size();k++) {
+//						int requestId=inComputer[compId].get(k).id;
+//						int requestSize=inComputer[compId].get(k).size;
+//						requestComputer[compId].add(new Request(requestId,requestSize,mTime));
+//					}
+//				}
+//			}
+//		}
 	}
 
 	
 	//4. addShareFile
 	void addShareFile(int mTime, int mComA, int mFileID, int mSize)
 	{
-		File file=new File(mFileID,mSize,mTime);
+		//1. 현재 시각까지 다운로드 진행 반영(업데이트)
+		
+		//2. 공유 파일 추가
+		File file=new File(mFileID,mSize,mTime,mComA);
 		inComputer[mComA].add(file);
 		fileMap.put(mFileID, file);
 		
-		if(requestComputer!=null) {
-			for(int i=0;i<N;i++) {
-				downloadDijk(i);//5000이내에 있는 컴퓨터 목록 반환
-				//그 컴퓨터들에 있는 파일들 다운로드 시작(mTime에)
-				for(int d=0;d<canDownload.size();d++) {
-					int compId=canDownload.get(d);
-					//이 컴퓨터에 있는 파일을 요청 파일에 추가
-					for(int k=0;k<inComputer[compId].size();k++) {
-						int requestId=inComputer[compId].get(k).id;
-						int requestSize=inComputer[compId].get(k).size;
-						requestComputer[compId].add(new Request(requestId,requestSize,mTime));
-					}
-				}
-			}
-		}
+		//3. 기존 모든 요청의 sourceCnt 재계산 
+//		if(requestComputer!=null) {
+//			for(int i=1;i<=N;i++) {
+//				downloadDijk(i);//5000이내에 있는 컴퓨터 목록 반환
+//				//그 컴퓨터들에 있는 파일들 다운로드 시작(mTime에)
+//				for(int d=0;d<canDownload.size();d++) {
+//					int compId=canDownload.get(d);
+//					//이 컴퓨터에 있는 파일을 요청 파일에 추가
+//					for(int k=0;k<inComputer[compId].size();k++) {
+//						int requestId=inComputer[compId].get(k).id;
+//						int requestSize=inComputer[compId].get(k).size;
+//						requestComputer[compId].add(new Request(requestId,requestSize,mTime));
+//					}
+//				}
+//			}
+//		}
 	}
 
+	//현재 시각까지 다운로드 진행 반영용 함수
+	
+	
+	
+	//현재 그 요청에 붙을 수 있는 공유 원본 수를 세는 함수
 	
 	//5. downloadFile
 	int downloadFile(int mTime, int mComA, int mFileID)
