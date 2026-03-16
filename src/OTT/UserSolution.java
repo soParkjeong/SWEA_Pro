@@ -143,10 +143,11 @@ class UserSolution
 		//갱신해서
 		movie.total+=mRating;
 		
-		//다시 추가 
+		//다시 추가(그러면 재정렬되겄지?)
 		allSet.add(movie);
 		genreSet[movie.genre].add(movie);
 		
+		//시청기록에도 추가 
 		watchedId[uID].add(mID);
 		history[uID].add(new WatchRec(mID,mRating));
 		

@@ -35,8 +35,7 @@ class UserSolution
 		return Integer.compare(a.id,b.id);
 	};
 	
-    public void init()
-    {
+    public void init(){
     	all=new HashMap<>();
     	sellClosed=new HashSet<>();
     	offSet=new int[6][6];
@@ -48,8 +47,7 @@ class UserSolution
     	}
     }
 
-    public int sell(int mID, int mCategory, int mCompany, int mPrice)
-    {
+    public int sell(int mID, int mCategory, int mCompany, int mPrice){
     	int basePrice=mPrice+offSet[mCategory][mCompany];//basePrice는 바뀌면 안됨->매번 treeSet정렬하면 터짐 
     	
     	Product p=new Product(mID,mCategory,mCompany,basePrice);
@@ -60,8 +58,7 @@ class UserSolution
         return selling[mCategory][mCompany].size();
     }
 
-    public int closeSale(int mID)
-    {
+    public int closeSale(int mID){
     	Product p=all.get(mID);
     	if(p==null) return -1;
     	

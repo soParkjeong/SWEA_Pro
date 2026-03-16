@@ -11,8 +11,11 @@ class UserSolution {
 	int N;
 	int M;
 	int K;
+	
+	int[] charge;//시간당 충전 용량
 
 	ArrayList<Edge>[] graph;
+	HashMap<Integer,Edge> EdgeMap;//도로 정보 저장소
 	
 	static class Edge{
 		int from;
@@ -31,9 +34,6 @@ class UserSolution {
 			this.removed=false;
 		}
 	}
-	
-	int[] charge;//충전 용량 
-	HashMap<Integer,Edge> EdgeMap;//도로 정보 저장소
 	
 	PriorityQueue<infectState> pq1;
 	PriorityQueue<StateWithBattery> pq2;
@@ -208,7 +208,7 @@ class UserSolution {
 			int newTime=curTime+1;
 			if(newTime<infect[curCity]) {
 				//전력 충전 
-				int newb = curBattery + charge[curCity];;
+				int newb = curBattery + charge[curCity];
 				if(curBattery+charge[curCity]>=B) {//충전해도 B를 넘으면 안됨
 					newb=B;
 				}
