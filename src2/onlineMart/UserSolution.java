@@ -50,10 +50,15 @@ class UserSolution
 
     public int sell(int mID, int mCategory, int mCompany, int mPrice)
     {
-    	mInfo info=new mInfo(mID,mCategory,mCompany,mPrice+offSet[mCategory][mCompany]);
+    	mInfo info=new mInfo(mID,mCategory,mCompany,mPrice+offSet[mCategory][mCompany]);//discount(offSet에 합이 누적되는 시기)는 sell하고 있는 상품에 한해서만 적용되어야 하니까/discount 이후에 들어올 sell 제품들에는 discount가 먹여지면 안되니까 +offSet만큼 더해서 넣어서 추후에 offSet(discount)가 적용되어도 원가가 되도록!!
+    	//offSet[][]에는 내가 sell 되기 이전에 할인 사항들에 대한 누적할인가들이 들어가있음..!! 항상 sell 함수 호출되고 그 당시 sell 되고 있는 상품들에 대해서만 discount가 적용되므로 
     	mMap.put(mID, info);//맵에 추가
     	
-    	set[mCategory][mCompany].add(info);//판매 중 셋에도 추가 
+//    	if(mPrice+offSet[mCategory][mCompany]>0) {
+//        	set[mCategory][mCompany].add(info);//판매 중 셋에도 추가 
+//    	}
+    	
+    	set[mCategory][mCompany].add(info);//판매 중 셋에도 추가
     	
 //    	printMap();
     	
@@ -86,23 +91,28 @@ class UserSolution
 
     public int discount(int mCategory, int mCompany, int mAmount)
     {
-    	offSet[mCategory][mCompany]+=mAmount;
+    	offSet[mCategory][mCompany]+=mAmount;//할인가 계속 누적해서 저장하기 
     	
     	int cnt=0;
+    	HashSet<mInfo> remove=new HashSet<>();
     	for(mInfo info:set[mCategory][mCompany]) {//이게 이미 낮은 것부터 들어가있으니까 
     		int price=info.price;
     		int id=info.id;
     		
     		if(price-offSet[mCategory][mCompany]<=0) {
-    			cnt++;
     			mMap.get(id).closed=true;//판매 종료 처리해주기(재정렬은 아직..)
+    			remove.add(info);
     		}else {
     			break;//커지는 순간부터 뒤는 볼 필요 없음 
     		}
     	}
     	
+		for(mInfo info:remove) {
+			set[mCategory][mCompany].remove(info);
+		}
+		
     	int size=set[mCategory][mCompany].size();
-        return size-cnt;
+        return size;
     }
 
     Solution.RESULT show(int mHow, int mCode)
@@ -110,37 +120,7 @@ class UserSolution
 //    	System.out.println("-----CMD_SHOW-----");
 //    	
     	Solution.RESULT res = new Solution.RESULT();
-//    	
-//    	if(mHow==0) {
-//    		for(int i=1;i<6;i++) {
-//    			for(int j=1;j<6;j++) {
-//    				if(set[i][j]!=null) {
-//        				mInfo info=set[i][j].pollFirst();//제거
-//        				info.price-=offSet[i][j];//값 변경
-//        				if(info.price<=0) continue;//판매 중 상태가 아니게 되면 패스 
-//        				set[i][j].add(info);//재투입 후 재정렬
-//    				}
-//    			}
-//    		}
-//    	}else if(mHow==1) {
-//    		for(int j=1;j<6;j++) {
-//    			if(set[mCode][j]!=null) {
-//	    			mInfo info=set[mCode][j].pollFirst();//제거
-//					info.price-=offSet[mCode][j];//값 변경
-//					if(info.price<=0) continue;
-//					set[mCode][j].add(info);//재투입 후 재정렬
-//    			}
-//    		}
-//    	}else {
-//    		for(int i=1;i<6;i++) {
-//    			if(set[i][mCode]!=null) {
-//	    			mInfo info=set[i][mCode].pollFirst();//제거
-//					info.price-=offSet[i][mCode];//값 변경
-//					if(info.price<=0) continue;
-//					set[i][mCode].add(info);//재투입 후 재정렬
-//    			}
-//    		}
-//    	}
+
  
         TreeSet<mInfo> cand=new TreeSet<>(comp);//최종 후보군 담을 트리셋 
         HashSet<mInfo> remove=new HashSet<>();
@@ -152,22 +132,14 @@ class UserSolution
 //					System.out.println("offSet[" + i + "][" + j + "] : "  + offSet[i][j]);
     				for(mInfo info:set[i][j]) {
 //    					System.out.println(info.id + " | " + info.price);
-
-    					
+					
     					int tempPrice = info.price;
     					tempPrice-=offSet[i][j];//값 변경
-//    					info.price-=offSet[i][mCode];//값 변경
-    					if(tempPrice<=0) {
-    						remove.add(info);
-    						continue;
-    					}
+
     					cand.add(new mInfo(info.id, info.cat, info.com, tempPrice));
     					cnt++;
     					if(cnt==5) break;
     				}
-    				for(mInfo info:remove) {
-    	    			set[i][j].remove(info);
-    	    		}
     			}
     		}
     		
@@ -178,17 +150,9 @@ class UserSolution
 					cnt++;
 					int tempPrice = info.price;
 					tempPrice-=offSet[mCode][j];//값 변경
-//					info.price-=offSet[mCode][j];//값 변경
-					if(tempPrice<=0) {
-						remove.add(info);
-						continue;
-					}
 					cand.add(new mInfo(info.id, info.cat, info.com, tempPrice));
 					if(cnt==5) break;
 				}
-				for(mInfo info:remove) {
-	    			set[mCode][j].remove(info);
-	    		}
     		}
     	}else {
     		for(int i=1;i<6;i++) {
@@ -197,17 +161,9 @@ class UserSolution
 					cnt++;
 					int tempPrice = info.price;
 					tempPrice-=offSet[i][mCode];//값 변경
-//					info.price-=offSet[i][mCode];//값 변경
-					if(tempPrice<=0) {
-						remove.add(info);
-						continue;
-					}
 					cand.add(new mInfo(info.id, info.cat, info.com, tempPrice));
 					if(cnt==5) break;
 				}
-				for(mInfo info:remove) {
-	    			set[i][mCode].remove(info);
-	    		}
     		}
     	}
     	

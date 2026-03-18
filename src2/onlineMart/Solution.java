@@ -122,7 +122,7 @@ class Solution
         int TC = Integer.parseInt(st.nextToken());
         int MARK = Integer.parseInt(st.nextToken());
         
-        TC = 3;
+//        TC = 3;
         
         for (int testcase = 1; testcase <= TC; ++testcase)
         {
