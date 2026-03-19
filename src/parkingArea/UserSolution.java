@@ -2,6 +2,8 @@ package parkingArea;
 
 import java.util.*;
 
+import parkingArea2.Solution;
+
 class UserSolution {
     //전역 변수
     int N, M, L;
