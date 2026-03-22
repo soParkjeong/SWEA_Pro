@@ -19,7 +19,7 @@ class UserSolution {
 			this.r=r;
 			this.c=c;
 			this.cat=cat;
-			this.wGrowth=0;//객체별로 저장하는 경우는 걸치는 애들 
+			this.wGrowth=wGrowth;//객체별로 저장하는 경우는 걸치는 애들 
 			this.mGrowth=mGrowth;
 			this.sowTime=sowTime;
 		}
@@ -33,6 +33,9 @@ class UserSolution {
 	
 	void init(int N, int mGrowthTime[])	{
 		this.N=N;
+		BS=100;
+		BC=(N+BS-1)/BS;
+		
 		catGrowth=new int[3];
 		for(int i=0;i<3;i++) {
 			catGrowth[i]=mGrowthTime[i];
@@ -43,9 +46,6 @@ class UserSolution {
 			Arrays.fill(farm[i], -1);
 		}
 		water=new int[BC][BC];
-		
-		BS=100;
-		BC=(N+BS-1)/BS;
 		
 		bucket=new ArrayList[BC][BC];
 		for(int i=0;i<BC;i++) {
@@ -60,7 +60,7 @@ class UserSolution {
 		int bc=mCol/BS;
 		int cat=mCategory;
 		
-		cropInfo crop=new cropInfo(mRow,mCol,cat,0,catGrowth[cat],mTime);
+		cropInfo crop=new cropInfo(mRow,mCol,cat,-water[br][bc],catGrowth[cat],mTime);//새로 심어지는 애들은 누적 급수 반영하면 안되니까 반대로 계산
 		if(farm[mRow][mCol]==-1) {//비어있다면 
 			farm[mRow][mCol]=cat;//맵에 추가 
 			bucket[br][bc].add(crop);//버킷에 추가
@@ -100,7 +100,7 @@ class UserSolution {
 					for(cropInfo crop:bucket[br][bc]) {
 						int r=crop.r;
 						int c=crop.c;
-						if(r>=mRow && r<mRow+mHeight && c>=mCol && c<mCol+mWidth) {
+						if(r>=mRow && r<=mRow+mHeight-1 && c>=mCol && c<=mCol+mWidth-1) {
 							crop.wGrowth+=G;
 							cnt++;
 						}
@@ -128,13 +128,13 @@ class UserSolution {
 				int ce=Math.min(N-1, cs+BS-1);
 				
 				boolean full=false;
-				if(rs>=brs && re<=bre && cs>=bcs && ce<=bce) full=true;//쏙 들어감
+				if(rs>=mRow && re<=mRow+mHeight-1 && cs>=mCol && ce<=mCol+mWidth-1) full=true;//쏙 들어감
 				
 				int length=0;
 				if(full) {//쏙 들어가면
 					for(cropInfo crop:bucket[br][bc]) {
-						length=(mTime-crop.sowTime)/crop.mGrowth+water[br][bc];
-						System.out.print("L:"+L+" | "+length+",");
+						length=(mTime-crop.sowTime)/crop.mGrowth+water[br][bc]+crop.wGrowth;
+//						System.out.print("L:"+L+" | "+length+",");
 						if(length<L) {
 							return 0;
 						}
@@ -144,9 +144,9 @@ class UserSolution {
 					for(cropInfo crop:bucket[br][bc]) {
 						int r=crop.r;
 						int c=crop.c;
-						if(r>=mRow && r<mRow+mHeight && c>=mCol && c<mCol+mWidth) {
-							length=(mTime-crop.sowTime)/crop.mGrowth+crop.wGrowth;
-							System.out.print("L:"+L+" | "+length+",");
+						if(r>=mRow && r<=mRow+mHeight-1 && c>=mCol && c<=mCol+mWidth-1) {
+							length=(mTime-crop.sowTime)/crop.mGrowth+water[br][bc]+crop.wGrowth;
+//							System.out.print("L:"+L+" | "+length+",");
 							if(length<L) {
 								return 0;
 							}
@@ -154,7 +154,19 @@ class UserSolution {
 						}
 					}
 				}
+			}
+		}
+		
+		for(int br=brs;br<=bre;br++) {
+			for(int bc=bcs;bc<=bce;bc++) {
+				int rs=br*BS;
+				int cs=bc*BS;
 				
+				int re=Math.min(N-1, rs+BS-1);
+				int ce=Math.min(N-1, cs+BS-1);
+				
+				boolean full=false;
+				if(rs>=mRow && re<=mRow+mHeight-1 && cs>=mCol && ce<=mCol+mWidth-1) full=true;//쏙 들어감
 				if(full) {//쏙 들어가면
 					for(cropInfo crop:bucket[br][bc]) {
 						int r=crop.r;
@@ -162,15 +174,16 @@ class UserSolution {
 						farm[r][c]=-1;
 					}
 					bucket[br][bc].clear();//그 버킷 싹 비워주기 
+					water[br][bc]=0;
 				}else {
 					int size=bucket[br][bc].size();
-					for(int i=size;i>=0;i--) {
+					for(int i=size-1;i>=0;i--) {
 						cropInfo crop=bucket[br][bc].get(i);
 						int r=crop.r;
 						int c=crop.c;
 						if(r>=mRow && r<mRow+mHeight && c>=mCol && c<mCol+mWidth) {
 							farm[r][c]=-1;
-							bucket[br][bc].remove(crop);
+							bucket[br][bc].remove(i);
 						}
 					}
 				}

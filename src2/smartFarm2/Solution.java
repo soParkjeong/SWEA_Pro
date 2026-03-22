@@ -46,8 +46,10 @@ class Solution {
                 ans = Integer.parseInt(st.nextToken());
 	            ret = userSolution.sow(mTime, mRow, mCol, mCategory);
 	            
-                System.out.println("-----------CMD_SOW----------");
-                System.out.println("내 답:"+ret+"  |  "+"정답:"+ans);
+	            if(ans!=ret) {
+	                System.out.println("-----------CMD_SOW----------");
+	                System.out.println("내 답:"+ret+"  |  "+"정답:"+ans);
+	            }
                 
                 if(ans != ret)
 	        		okay = false;
@@ -64,8 +66,10 @@ class Solution {
                 ans = Integer.parseInt(st.nextToken());
 	            ret = userSolution.water(mTime, G, mRow, mCol, mHeight, mWidth);
 	            
-                System.out.println("-----------CMD_WATER----------");
-                System.out.println("내 답:"+ret+"  |  "+"정답:"+ans);
+	            if(ans!=ret) {
+	                System.out.println("-----------CMD_WATER----------");
+	                System.out.println("내 답:"+ret+"  |  "+"정답:"+ans);
+	            }
                 
                 if(ans != ret)
 	        		okay = false;
@@ -82,8 +86,10 @@ class Solution {
                 ans = Integer.parseInt(st.nextToken());
 	            ret = userSolution.harvest(mTime, L, mRow, mCol, mHeight, mWidth);
 	            
-	            System.out.println("-----------CMD_HARVEST----------");
-                System.out.println("내 답:"+ret+"  |  "+"정답:"+ans);
+	            if(ans!=ret) {
+		            System.out.println("-----------CMD_HARVEST----------");
+	                System.out.println("내 답:"+ret+"  |  "+"정답:"+ans);
+	            }
                 
                 if(ans != ret)
 	        		okay = false;
@@ -102,7 +108,7 @@ class Solution {
         T = Integer.parseInt(st.nextToken());
         MARK = Integer.parseInt(st.nextToken());
 
-        T=1;
+//        T=11;
         
         for (int tc = 1; tc <= T; tc++) {
             int score = run() ? MARK : 0;
