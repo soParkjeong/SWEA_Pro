@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.StringTokenizer;
 
+import bigImage2.UserSolution;
+
 class Solution {
 
 	private static UserSolution userSolution = new UserSolution();
